@@ -3,4 +3,4 @@ __MACOSX
 .vscode
 .idea
 *.class
-out/
+**/out/
