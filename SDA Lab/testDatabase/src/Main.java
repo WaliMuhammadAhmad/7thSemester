@@ -1,49 +1,63 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Statement;
 
 public class Main {
-    // JDBC URL, username, and password of MySQL server
-    private static final String URL = "jdbc:mysql://localhost:3306/";
-    private static final String USER = "your_username";
-    private static final String PASSWORD = "your_password";
+    private static final String URL = "jdbc:mysql://localhost:3306/testDB";
+    private static final String USER = "root";
+    private static final String PASSWORD = "ihatemysql";
 
     public static void main(String[] args) {
         try {
-            // Load MySQL JDBC Driver
+            // load and register JDBC driver for MySQL
             Class.forName("com.mysql.cj.jdbc.Driver");
-
-            // Connect to MySQL
             Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-            Statement statement = connection.createStatement();
+            System.out.println("Connected to the database!");
 
-            // Create a new database
-            String createDatabaseSQL = "CREATE DATABASE IF NOT EXISTS testDB";
-            statement.executeUpdate(createDatabaseSQL);
-            System.out.println("Database 'testDB' created successfully!");
+            // Create operation
+            String insertSQL = "INSERT INTO users (name, email) VALUES (?, ?)";
+            PreparedStatement insertStatement = connection.prepareStatement(insertSQL);
+            insertStatement.setString(1, "Mark Spencer");
+            insertStatement.setString(2, "mark.spencer@example.com");
+            int rowsInserted = insertStatement.executeUpdate();
+            System.out.println(rowsInserted + " row(s) inserted.");
+            insertStatement.close();
 
-            // Connect to the newly created database
-            connection = DriverManager.getConnection(URL + "testDB", USER, PASSWORD);
+            // Read operation
+            String selectSQL = "SELECT * FROM users";
+            Statement selectStatement = connection.createStatement();
+            ResultSet resultSet = selectStatement.executeQuery(selectSQL);
+            System.out.println("Reading users from the database:");
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String name = resultSet.getString("name");
+                String email = resultSet.getString("email");
+                System.out.println("ID: " + id + ", Name: " + name + ", Email: " + email);
+            }
+            resultSet.close();
+            selectStatement.close();
 
-            // Create a table in 'testDB'
-            String createTableSQL = "CREATE TABLE IF NOT EXISTS users (" +
-                    "id INT AUTO_INCREMENT PRIMARY KEY, " +
-                    "name VARCHAR(50), " +
-                    "email VARCHAR(100))";
-            statement = connection.createStatement();
-            statement.executeUpdate(createTableSQL);
-            System.out.println("Table 'users' created successfully!");
+            // Update operation
+            String updateSQL = "UPDATE users SET name = ? WHERE email = ?";
+            PreparedStatement updateStatement = connection.prepareStatement(updateSQL);
+            updateStatement.setString(1, "Mark S.");
+            updateStatement.setString(2, "mark.spencer@example.com");
+            int rowsUpdated = updateStatement.executeUpdate();
+            System.out.println(rowsUpdated + " row(s) updated.");
+            updateStatement.close();
 
-            // Insert data into the 'users' table
-            String insertDataSQL = "INSERT INTO users (name, email) VALUES " +
-                    "('John Doe', 'john.doe@example.com'), " +
-                    "('Jane Smith', 'jane.smith@example.com')";
-            statement.executeUpdate(insertDataSQL);
-            System.out.println("Data inserted successfully!");
+            // Delete operation
+            String deleteSQL = "DELETE FROM users WHERE email = ?";
+            PreparedStatement deleteStatement = connection.prepareStatement(deleteSQL);
+            deleteStatement.setString(1, "mark.spencer@example.com");
+            int rowsDeleted = deleteStatement.executeUpdate();
+            System.out.println(rowsDeleted + " row(s) deleted.");
+            deleteStatement.close();
 
-            // Close the connection
-            statement.close();
             connection.close();
+            System.out.println("Database operations completed and connection closed.");
         } catch (Exception e) {
             e.printStackTrace();
         }
