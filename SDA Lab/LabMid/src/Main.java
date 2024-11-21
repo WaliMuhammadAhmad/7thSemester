@@ -1,6 +1,7 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -11,33 +12,41 @@ public class Main {
     public static void main(String[] args) {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
              Scanner scanner = new Scanner(System.in)) {
-
+            String accountNumber;
+            double balance;
             Bank bank = new Bank("Simple Bank");
+            bank.getAlreadyUsers(conn);
+
             System.out.println("Welcome to " + bank.getName());
 
             while (true) {
                 System.out.println("\n1. Create Account");
                 System.out.println("2. Deposit");
                 System.out.println("3. Withdraw");
-                System.out.println("4. View User Transaction History");
-                System.out.println("5. View All Transactions (Bank Level)");
+                System.out.println("4. Current Balance");
+                System.out.println("5. View User Transaction History");
                 System.out.println("6. Exit");
                 System.out.print("Choose an option: ");
-                int choice = scanner.nextInt();
+                int choice = scanner.nextInt(); //  nextInt() is causing java.util.InputMismatchException error sometimes
 
                 try {
                     switch (choice) {
                         case 1:
                             System.out.print("Enter account number: ");
-                            String accountNumber = scanner.next();
+                            accountNumber = scanner.next();
                             System.out.print("Enter name: ");
                             String name = scanner.next();
                             System.out.print("Enter initial balance: ");
-                            double balance = scanner.nextDouble();
-                            User user = new User(accountNumber, name, balance);
-                            user.saveToDatabase(conn);
-                            bank.addUser(user);
-                            System.out.println("Account created successfully for " + name + ".");
+                            balance = scanner.nextDouble();
+                            try {
+                                User user = new User(accountNumber, name, balance);
+                                user.saveToDatabase(conn);
+                                bank.addUser(user);
+                                System.out.println("Account created successfully for " + name + ".");
+                            } catch (SQLException e) {
+                                Logger.logError("Error storing user : " + e.getMessage());
+                                System.out.println("Failed to create account. Please try again.");
+                            }
                             break;
 
                         case 2:
@@ -45,12 +54,18 @@ public class Main {
                             accountNumber = scanner.next();
                             System.out.print("Enter deposit amount: ");
                             double depositAmount = scanner.nextDouble();
+
                             User depositUser = findUserByAccountNumber(bank, accountNumber);
                             if (depositUser != null) {
-                                Transaction deposit = new Transaction("DEPOSIT", depositAmount, depositUser);
-                                deposit.saveToDatabase(conn);
-                                depositUser.addTransaction(deposit);
-                                System.out.println("Deposit of " + depositAmount + " successful.");
+                                try {
+                                    Transaction deposit = new Transaction("DEPOSIT", depositAmount, depositUser);
+                                    deposit.saveToDatabase(conn);
+                                    depositUser.addTransaction(deposit);
+                                    balance = bank.getCurrentBalance(conn, accountNumber);
+                                    System.out.println("Deposit of " + depositAmount + " successful. Current balance: " + balance);
+                                } catch (Exception e) {
+                                    System.out.println("Deposit failed: " + e.getMessage());
+                                }
                             } else {
                                 System.out.println("Account not found.");
                             }
@@ -64,11 +79,15 @@ public class Main {
 
                             User withdrawUser = findUserByAccountNumber(bank, accountNumber);
                             if (withdrawUser != null) {
-                                Transaction withdrawal = new Transaction("WITHDRAWAL", withdrawAmount, withdrawUser);
-                                withdrawal.saveToDatabase(conn);
-                                withdrawUser.addTransaction(withdrawal);
-
-                                System.out.println("Withdrawal of " + withdrawAmount + " successful.");
+                                try {
+                                    Transaction withdrawal = new Transaction("WITHDRAWAL", withdrawAmount, withdrawUser);
+                                    withdrawal.saveToDatabase(conn);
+                                    withdrawUser.addTransaction(withdrawal);
+                                    balance = bank.getCurrentBalance(conn, accountNumber);
+                                    System.out.println("Withdrawal of " + withdrawAmount + " successful. Current balance: " + balance);
+                                } catch (Exception e) {
+                                    System.out.println("Withdrawal failed: " + e.getMessage());
+                                }
                             } else {
                                 System.out.println("Account not found.");
                             }
@@ -77,25 +96,27 @@ public class Main {
                         case 4:
                             System.out.print("Enter account number: ");
                             accountNumber = scanner.next();
-
-                            User historyUser = findUserByAccountNumber(bank, accountNumber);
-                            if (historyUser != null) {
-                                System.out.println("Transaction History for " + historyUser.getName() + ":");
-                                for (Transaction transaction : historyUser.getTransactions()) {
-                                    System.out.println(transaction.getType() + " of " +
-                                            transaction.getAmount() + " by " + historyUser.getName());
-                                }
+                            balance = bank.getCurrentBalance(conn, accountNumber);
+                            if (balance != -1) {
+                                System.out.println("Current balance for account " + accountNumber + " is: " + balance);
                             } else {
-                                System.out.println("Account not found.");
+                                System.out.println("Unable to get balance.");
                             }
                             break;
 
                         case 5:
-                            System.out.println("All Transactions (Bank Level):");
-                            for (Transaction transaction : bank.getAllTransactions()) {
-                                System.out.println(transaction.getType() + " of " +
-                                        transaction.getAmount() + " by account " +
-                                        transaction.getUser().getAccountNumber());
+                            System.out.print("Enter account number: ");
+                            accountNumber = scanner.next();
+
+                            List<Transaction> userTransactions = bank.getAlreadyTransactions(conn, accountNumber);
+                            if (!userTransactions.isEmpty()) {
+                                System.out.println("Transaction History for account " + accountNumber + ":");
+                                for (Transaction transaction : userTransactions) {
+                                    System.out.println(transaction.getType() + " of " +
+                                            transaction.getAmount() + " on " + transaction.getDate());
+                                }
+                            } else {
+                                System.out.println("No transactions found for account " + accountNumber + ".");
                             }
                             break;
 
@@ -104,7 +125,7 @@ public class Main {
                             return;
 
                         default:
-                            System.out.println("Invalid option. Try again.");
+                            System.out.println("Wrong option. Try again.");
                     }
                 } catch (Exception e) {
                     Logger.logError(e.getMessage());
@@ -112,7 +133,8 @@ public class Main {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Database connection error: " + e.getMessage());
+            System.err.println("Database error");
+            Logger.logError("Database connection error: " + e.getMessage());
         }
     }
 

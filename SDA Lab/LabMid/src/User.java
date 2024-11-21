@@ -7,9 +7,9 @@ public class User {
     private String accountNumber;
     private String name;
     private double balance;
-    private List<Transaction> transactions; // Composition: User owns Transactions
+    // Composition
+    private List<Transaction> transactions;
 
-    // Constructor
     public User(String accountNumber, String name, double balance) {
         this.accountNumber = accountNumber;
         this.name = name;
@@ -17,24 +17,16 @@ public class User {
         this.transactions = new ArrayList<>();
     }
 
-    // Getters and Setters
-    public String getAccountNumber() {
-        return accountNumber;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public double getBalance() {
-        return balance;
-    }
-
+    public String getAccountNumber() {return accountNumber;}
+    public String getName() {return name;}
+    public double getBalance() {return balance;}
     public List<Transaction> getTransactions() {
         return transactions;
     }
+    public void addTransaction(Transaction transaction) {
+        transactions.add(transaction);
+    }
 
-    // Save the user to the database
     public void saveToDatabase(Connection conn) throws SQLException {
         String query = "INSERT INTO Accounts (account_number, name, balance) VALUES (?, ?, ?)";
         try (var stmt = conn.prepareStatement(query)) {
@@ -42,12 +34,9 @@ public class User {
             stmt.setString(2, this.name);
             stmt.setDouble(3, this.balance);
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            Logger.logError("Error storing Users in Database : "+e.getMessage());
         }
-    }
-
-    // Add a transaction to the user
-    public void addTransaction(Transaction transaction) {
-        transactions.add(transaction);
     }
 }
 

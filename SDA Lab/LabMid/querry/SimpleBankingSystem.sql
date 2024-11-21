@@ -18,4 +18,6 @@ CREATE TABLE Transactions (
     FOREIGN KEY (account_id) REFERENCES Accounts(account_id)
 );
 
--- ref: Geeks4Geeks
+select * from Accounts;
+select * from Transactions
+
