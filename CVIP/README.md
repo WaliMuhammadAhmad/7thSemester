@@ -1,6 +1,6 @@
 # Computer Vision and Image Processing (CVIP)
 
-This repository contains all the materials, assignments, and resources for the **Computer Vision and Image Processing (CVIP)** course taken during the 7th semester. It includes lecture slides, assignments, project work, and reference books to help understand and implement CVIP concepts.
+This dir contains all the materials, assignments, and resources for the **Computer Vision and Image Processing (CVIP)** course taken during the 7th semester. It includes lecture slides, assignments, project work, and reference books to help understand and implement CVIP concepts.
 
 ---
 
@@ -19,7 +19,7 @@ This repository contains all the materials, assignments, and resources for the *
   Includes lecture slides and resources for midterm exam preparation.
 
 - [**Project**](#project)  
-  Dedicated to the course project work and related files. The complete project is available in [this repository](https://github.com/phoenixlibbi/CVIP).
+  Dedicated to the course project work and related files. The complete project is available in [this dir](https://github.com/phoenixlibbi/CVIP).
 
 ---
 
@@ -64,7 +64,7 @@ This repository contains all the materials, assignments, and resources for the *
 - **CVIP Assignment 1.1.pdf**: Assignment document for the project.
 - **CVIP Project Documentation.docx**: Documentation for the CVIP project.
 - **YOLO.ipynb**: Initial version of the YOLO implementation notebook.
-- **Complete Project**: The latest version of the project, including the YOLO implementation, is available in [this repository](https://github.com/phoenixlibbi/CVIP).
+- **Complete Project**: The latest version of the project, including the YOLO implementation, is available in [this dir](https://github.com/phoenixlibbi/CVIP).
 
 ---
 
